@@ -405,3 +405,7 @@ Makefile
 *.swp
 *.swo
 *.swn
+
+# Misc
+*.docx
+prototypes/
