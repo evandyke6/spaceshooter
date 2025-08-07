@@ -1,54 +1,62 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
-by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
-
-*/
-
 #include "raylib.h"
 
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+Vector2 CreateVector2(float x, float y) {
+    Vector2 vec;
+    vec.x = x;
+    vec.y = y;
+    return vec;
+}
 
-int main ()
+//------------------------------------------------------------------------------------
+// Program main entry point
+//------------------------------------------------------------------------------------
+int main(void)
 {
-	// Tell the window to use vsync and work on high DPI displays
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = 640;
+    const int screenHeight = 480;
 
-	// Create the window and OpenGL context
-	InitWindow(1280, 800, "Hello Raylib");
+    const int monitorWidth = GetMonitorWidth(GetCurrentMonitor());
+    const int monitorHeight = GetMonitorHeight(GetCurrentMonitor());
 
-	// Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-	SearchAndSetResourceDir("resources");
+    const char text[] = "This is a Test Window";
+    const int fontSize = 20;
 
-	// Load a texture from the resources directory
-	Texture wabbit = LoadTexture("wabbit_alpha.png");
-	
-	// game loop
-	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
-	{
-		// drawing
-		BeginDrawing();
+    InitWindow(640, 480, "raylib");
 
-		// Setup the back buffer for drawing (clear color and depth buffers)
-		ClearBackground(BLACK);
+    Font font = LoadFont("build/external/raylib-master/examples/text/resources/dejavu.fnt");
 
-		// draw some text using the default font
-		DrawText("Hello Raylib", 200,200,20,WHITE);
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
 
-		// draw our texture to the screen
-		DrawTexture(wabbit, 400, 200, WHITE);
-		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-	}
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        if (IsKeyPressed(KEY_F)){
+            ToggleBorderlessWindowed();
+        }
+        float textWidth = MeasureTextEx(font, text, fontSize, 2).x;
+        float textHeight = MeasureTextEx(font, text, fontSize, 2).y;
+        float x = (GetScreenWidth()- textWidth)/2.0f;
+        float y = (GetScreenHeight() - textHeight)/2.0f;
+    
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
 
-	// cleanup
-	// unload our texture so it can be cleaned up
-	UnloadTexture(wabbit);
+            ClearBackground(RAYWHITE);
 
-	// destroy the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
+            DrawTextEx(font, text, CreateVector2(x,y), fontSize, 2, BLACK);
+
+        EndDrawing();
+        //----------------------------------------------------------------------------------
+    }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+
+    return 0;
 }
