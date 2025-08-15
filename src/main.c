@@ -1,4 +1,17 @@
 #include "raylib.h"
+#include <limits.h>		/* for CHAR_BIT */
+
+#define BITMASK(b) (1 << ((b) % CHAR_BIT))
+#define BITSLOT(b) ((b) / CHAR_BIT)
+#define BITSET(a, b) ((a)[BITSLOT(b)] |= BITMASK(b))
+#define BITCLEAR(a, b) ((a)[BITSLOT(b)] &= ~BITMASK(b))
+#define BITTEST(a, b) ((a)[BITSLOT(b)] & BITMASK(b))
+#define BITNSLOTS(nb) ((nb + CHAR_BIT - 1) / CHAR_BIT)
+
+#define MAX_ENTITIES 1000
+#define MAX_COMPONENTS 10
+#define MAX_ARCHETYPES 1000
+#define MAX_SYSTEMS 100
 
 Vector2 CreateVector2(float x, float y) {
     Vector2 vec;
@@ -6,6 +19,75 @@ Vector2 CreateVector2(float x, float y) {
     vec.y = y;
     return vec;
 }
+
+unsigned int entities[MAX_ENTITIES] = {0};
+
+typedef struct {
+    void* _data;
+    size_t _count;
+    size_t _capacity;
+    size_t _elem_size;
+} ComponentArray;
+
+typedef struct {
+    unsigned int *entities;
+    ComponentArray *components;
+    size_t entityCount;
+    size_t entityCapacity;
+    size_t totalComponentCount;
+    unsigned char Signature[BITNSLOTS(MAX_COMPONENTS)];
+} Archetype;
+
+typedef void (*SystemFunc)(const char *signature);
+
+SystemFunc systems[MAX_SYSTEMS];
+size_t systemCount = 0;
+
+// Adding a system:
+void add_system(SystemFunc sys) {
+    if (systemCount < MAX_SYSTEMS) {
+        systems[systemCount++] = sys;
+    }
+}
+
+ComponentArray init_component_array(size_t elem_size, size_t capacity) {
+    ComponentArray array;
+    array._elem_size = elem_size;
+    array._capacity = capacity;
+    array._data = malloc(elem_size, capacity);
+    array._count = 0;
+    return array;
+}
+
+void* component_array_add(ComponentArray *arr, void *element)
+{
+    if (arr->_count >= arr->_capacity){
+        arr->_capacity *= 2;
+        arr->_data = realloc(arr->_data,arr->_elem_size*arr->_capacity);
+    }
+
+    char* dest = (char*)arr->_data + (arr->_count * arr->_elem_size);
+    memcpy(dest, element, arr->_elem_size);
+    arr->_count++;
+    return dest;
+}
+
+void component_array_remove(ComponentArray *arr, int index)
+{
+    if (index < 0 || index >= arr->_count) return;
+    char* dest = (char*)arr->_data + (index * arr->_elem_size);
+    char* end = (char*)arr->_data + ((arr->_count-1) * arr->_elem_size);
+    memcpy(dest, end, arr->_elem_size);
+    arr->_count--;
+}
+
+void* get_component(ComponentArray *arr, size_t index) {
+    return (char*)arr->_data + (index * arr->_elem_size);
+}
+
+
+
+
 
 //------------------------------------------------------------------------------------
 // Program main entry point
