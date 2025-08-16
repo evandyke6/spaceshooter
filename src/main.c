@@ -8,9 +8,9 @@
 #define BITTEST(a, b) ((a)[BITSLOT(b)] & BITMASK(b))
 #define BITNSLOTS(nb) ((nb + CHAR_BIT - 1) / CHAR_BIT)
 
-#define MAX_ENTITIES 1000
+#define MAX_ENTITIES 100
 #define MAX_COMPONENTS 10
-#define MAX_ARCHETYPES 1000
+#define MAX_ARCHETYPES 100
 #define MAX_SYSTEMS 100
 
 Vector2 CreateVector2(float x, float y) {
@@ -29,12 +29,16 @@ typedef struct {
     size_t _elem_size;
 } ComponentArray;
 
+typedef struct{
+    int x;
+} TestComponent;
+
 typedef struct {
     unsigned int *entities;
     ComponentArray *components;
     size_t entityCount;
-    size_t entityCapacity;
-    size_t totalComponentCount;
+    size_t capacity;
+    size_t componentArrayCount;
     unsigned char Signature[BITNSLOTS(MAX_COMPONENTS)];
 } Archetype;
 
@@ -43,7 +47,6 @@ typedef void (*SystemFunc)(const char *signature);
 SystemFunc systems[MAX_SYSTEMS];
 size_t systemCount = 0;
 
-// Adding a system:
 void add_system(SystemFunc sys) {
     if (systemCount < MAX_SYSTEMS) {
         systems[systemCount++] = sys;
@@ -54,7 +57,7 @@ ComponentArray init_component_array(size_t elem_size, size_t capacity) {
     ComponentArray array;
     array._elem_size = elem_size;
     array._capacity = capacity;
-    array._data = malloc(elem_size, capacity);
+    array._data = malloc(elem_size * capacity);
     array._count = 0;
     return array;
 }
@@ -85,9 +88,40 @@ void* get_component(ComponentArray *arr, size_t index) {
     return (char*)arr->_data + (index * arr->_elem_size);
 }
 
+Archetype init_archetype()
+{
+    Archetype arch;
+    arch.entityCount = 0;
+    arch.componentArrayCount = 0;
+    arch.capacity = 20;
+    arch.components = malloc(arch.capacity * sizeof(ComponentArray));
+    arch.entities = malloc(arch.capacity * sizeof(int));
+    return arch;
+}
+
+void add_components_to_archetype(Archetype *arch, ComponentArray arr)
+{
+    if (arch->componentArrayCount >= arch->capacity)
+    {
+        arch->capacity *= 2;
+        arch->components = realloc(arch->components, sizeof(ComponentArray) * arch->capacity);
+    }
+    arch->components[arch->componentArrayCount] = arr;
+    arch->componentArrayCount++;
+}
 
 
-
+void add_entitiy_to_archetype(Archetype *arch, unsigned int entity)
+{
+    //TODO: make this append a new component to each component array
+        if (arch->entityCount >= arch->capacity)
+    {
+        arch->capacity *= 2;
+        arch->entities = realloc(arch->entities, sizeof(int) * arch->capacity);
+    }
+    arch->entities[arch->entityCount] = entity;
+    arch->entityCount++;
+}
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -109,7 +143,34 @@ int main(void)
 
     Font font = LoadFont("build/external/raylib-master/examples/text/resources/dejavu.fnt");
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(60);
+    
+    ComponentArray test = init_component_array(sizeof(TestComponent), 10);
+    ComponentArray test2 = init_component_array(sizeof(TestComponent), 10);
+    TestComponent tc;
+    tc.x = 5;
+
+    component_array_add(&test, &tc);
+    tc.x = 7;
+    component_array_add(&test2, &tc);
+
+    Archetype archTest = init_archetype();
+
+    add_components_to_archetype(&archTest, test);
+    add_components_to_archetype(&archTest, test2);
+    TestComponent *test3 = (TestComponent*)get_component(&archTest.components[0],0);
+    TestComponent *test4 = (TestComponent*)get_component(&archTest.components[1],0);
+
+    printf("%d\n", test3->x);
+    printf("%d\n", test4->x);
+
+    tc.x = 100;
+    component_array_add(&test, &tc);
+    test3 = (TestComponent*)get_component(&archTest.components[0],1);
+    printf("%d\n", test3->x);
+
+    
+    // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
