@@ -1,7 +1,7 @@
 #include "raylib.h"
 #include <limits.h> /* for CHAR_BIT */
 #include <stdlib.h>
-
+#include <stdio.h>
 #include <string.h>	
 
 #define BITMASK(b) (1 << ((b) % CHAR_BIT))
@@ -40,6 +40,10 @@ typedef struct {
     size_t _elem_size;
 } ComponentArray;
 
+typedef struct{
+    int x;
+} TestComponent;
+
 typedef struct {
     unsigned int *entities;
     ComponentArray *components;
@@ -47,6 +51,7 @@ typedef struct {
     size_t capacity;
     size_t componentArrayCount;
     size_t componetArrayCapacity;
+  
     unsigned int signature;
 } Archetype;
 
@@ -191,10 +196,6 @@ typedef struct{
 typedef struct{
     float hp;
     float top_speed;
-} ShipComponent;
-
-
-
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -216,7 +217,7 @@ int main(void)
     Font font = LoadFont("build/external/raylib-master/examples/text/resources/dejavu.fnt");
 
     SetTargetFPS(60);
-    
+  
     // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
