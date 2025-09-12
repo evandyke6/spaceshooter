@@ -177,7 +177,9 @@ bool remove_entitiy_from_archetype(Archetype *arr, unsigned int entity)
 bool archetype_update_signature(Archetype *arr, unsigned int signature)
 {
     arr->signature = signature;
+    return true;
 }
+
 typedef struct {
     float x;
     float y;
@@ -196,6 +198,8 @@ typedef struct{
 typedef struct{
     float hp;
     float top_speed;
+} ShipComponent;
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
