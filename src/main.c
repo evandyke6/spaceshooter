@@ -1,7 +1,7 @@
 #include "raylib.h"
 #include <limits.h> /* for CHAR_BIT */
 #include <stdlib.h>
-#include <stdio.h>
+
 #include <string.h>	
 
 #define BITMASK(b) (1 << ((b) % CHAR_BIT))
@@ -15,6 +15,13 @@
 #define MAX_COMPONENTS 10
 #define MAX_ARCHETYPES 100
 #define MAX_SYSTEMS 100
+
+typedef enum {
+    POSITION_COMPONENT,
+    VELOCITY_COMPOENT,
+    GUN_COMPONENT,
+    SHIP_COMPONENT
+} COMPONENTS_ENUM;
 
 Vector2 CreateVector2(float x, float y) {
     Vector2 vec;
@@ -33,10 +40,6 @@ typedef struct {
     size_t _elem_size;
 } ComponentArray;
 
-typedef struct{
-    int x;
-} TestComponent;
-
 typedef struct {
     unsigned int *entities;
     ComponentArray *components;
@@ -44,7 +47,7 @@ typedef struct {
     size_t capacity;
     size_t componentArrayCount;
     size_t componetArrayCapacity;
-    unsigned char Signature[BITNSLOTS(MAX_COMPONENTS)];
+    unsigned int signature;
 } Archetype;
 
 typedef void (*SystemFunc)(const char *signature);
@@ -165,6 +168,33 @@ bool remove_entitiy_from_archetype(Archetype *arr, unsigned int entity)
     }
     return false;
 }
+
+bool archetype_update_signature(Archetype *arr, unsigned int signature)
+{
+    arr->signature = signature;
+}
+typedef struct {
+    float x;
+    float y;
+} PositionComponent;
+
+typedef struct{
+    float x;
+    float y;
+} VelocityComponent;
+
+typedef struct{
+    float damage;
+    float rof;
+} GunComponent;
+
+typedef struct{
+    float hp;
+    float top_speed;
+} ShipComponent;
+
+
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -186,31 +216,6 @@ int main(void)
     Font font = LoadFont("build/external/raylib-master/examples/text/resources/dejavu.fnt");
 
     SetTargetFPS(60);
-    
-    ComponentArray test = init_component_array(sizeof(TestComponent), 10);
-    ComponentArray test2 = init_component_array(sizeof(TestComponent), 10);
-    TestComponent tc;
-    tc.x = 5;
-
-    component_array_add(&test, &tc);
-    tc.x = 7;
-    component_array_add(&test2, &tc);
-
-    Archetype archTest = init_archetype();
-
-    add_component_array_to_archetype(&archTest, test);
-    add_component_array_to_archetype(&archTest, test2);
-    TestComponent *test3 = (TestComponent*)get_component(&archTest.components[0],0);
-    TestComponent *test4 = (TestComponent*)get_component(&archTest.components[1],0);
-
-    printf("%d\n", test3->x);
-    printf("%d\n", test4->x);
-
-    tc.x = 100;
-    component_array_add(&test, &tc);
-    test3 = (TestComponent*)get_component(&archTest.components[0],1);
-    printf("%d\n", test3->x);
-
     
     // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
